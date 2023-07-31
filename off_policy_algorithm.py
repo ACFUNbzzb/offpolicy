@@ -584,13 +584,8 @@ class OffPolicyAlgorithm(BaseAlgorithm):
 
 
             # Rescale and perform action
-            env1 = gym.make("LunarLander-v2")
-            actions = env1.reset()
-            actions2 = env1.step(actions)
 
-            print(env1.step(actions))
-
-            new_obs, rewards, dones, infos = self.test(actions2)
+            new_obs, rewards, dones, infos = self.test(actions)
 
             self.num_timesteps += env.num_envs
             num_collected_steps += 1
