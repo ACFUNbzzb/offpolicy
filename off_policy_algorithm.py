@@ -6,6 +6,8 @@ import warnings
 from copy import deepcopy
 from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, Union, Iterator
 
+import xlwt
+
 import numpy as np
 import torch as th
 from gymnasium import spaces
@@ -42,6 +44,8 @@ if TYPE_CHECKING:
 SelfOffPolicyAlgorithm = TypeVar("SelfOffPolicyAlgorithm", bound="OffPolicyAlgorithm")
 ActType = TypeVar("ActType")
 ObsType = TypeVar("ObsType")
+
+
 
 class OffPolicyAlgorithm(BaseAlgorithm):
     """
@@ -143,6 +147,9 @@ class OffPolicyAlgorithm(BaseAlgorithm):
             sde_sample_freq=sde_sample_freq,
             supported_action_spaces=supported_action_spaces,
         )
+
+
+
         self.buffer_size = buffer_size
         self.batch_size = batch_size
         self.learning_starts = learning_starts
@@ -157,7 +164,7 @@ class OffPolicyAlgorithm(BaseAlgorithm):
         self._episode_storage = None
         if weight is None:
             weight = np.ones(shape=env.reward_space.shape)
-        self.w=weight
+        self.env.weights = self.w = weight
 
         # Save train freq parameter, will be converted later to TrainFreq object
         self.train_freq = train_freq
@@ -517,11 +524,19 @@ class OffPolicyAlgorithm(BaseAlgorithm):
         """
 
 
-        observation, reward, terminated, truncated, info = self.env.step(action)
-        scalar_reward = np.dot(reward, self.w)
-        info["vector_reward"] = reward
+        observation, reward, terminated, info = self.env.step(action)
+        output_txt = './test10.txt'
 
-        return observation, scalar_reward,terminated,truncated, info
+        with open(output_txt, 'a', encoding='utf-8') as file:
+            file.write(str(reward) + '\n')
+
+        scalar_rewards = [ np.dot(r, self.w) for r in reward]
+
+        for r, i in zip(scalar_rewards, info):
+            i["vector_reward"] = r
+
+
+        return observation, scalar_rewards,terminated, info
 
 
 
@@ -584,8 +599,18 @@ class OffPolicyAlgorithm(BaseAlgorithm):
 
 
             # Rescale and perform action
-            # new_obs, rewards, dones, infos = env.step(actions)
+
+
+
             new_obs, rewards, dones, infos = self.test(actions)
+
+
+
+
+
+
+
+
 
             self.num_timesteps += env.num_envs
             num_collected_steps += 1
@@ -626,4 +651,5 @@ class OffPolicyAlgorithm(BaseAlgorithm):
         callback.on_rollout_end()
 
         return RolloutReturn(num_collected_steps * env.num_envs, num_collected_episodes, continue_training)
+
 
