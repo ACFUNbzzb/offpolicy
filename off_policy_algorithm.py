@@ -520,23 +520,28 @@ class OffPolicyAlgorithm(BaseAlgorithm):
 
         Args:
             action: action to perform
-        Returns: obs, scalarized_reward, terminated, truncated, info
+        Returns: obs, scalarized_reward, terminated, info
         """
 
-
         observation, reward, terminated, info = self.env.step(action)
-        output_txt = './test10.txt'
 
-        with open(output_txt, 'a', encoding='utf-8') as file:
+        with open('./test20.txt', 'a', encoding='utf-8') as file:
             file.write(str(reward) + '\n')
 
-        scalar_rewards = [ np.dot(r, self.w) for r in reward]
+            self.episodeVectorReward += reward  # 累加奖励
 
-        for r, i in zip(scalar_rewards, info):
-            i["vector_reward"] = r
+            if terminated:
+                scalar_rewards = [np.dot(r, self.w) for r in self.episodeVectorReward]
+            else:
+                scalar_rewards = 0
 
 
-        return observation, scalar_rewards,terminated, info
+            scalar_rewards = [scalar_rewards]
+
+            for r, i in zip(scalar_rewards, info):
+                i["vector_reward"] = r
+
+        return observation, scalar_rewards, terminated, info
 
 
 
