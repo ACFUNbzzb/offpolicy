@@ -174,6 +174,7 @@ class OffPolicyAlgorithm(BaseAlgorithm):
             self.policy_kwargs["use_sde"] = self.use_sde
         # For gSDE only
         self.use_sde_at_warmup = use_sde_at_warmup
+        self.episodeVectorReward = 0
 
     def _convert_train_freq(self) -> None:
         """
@@ -531,7 +532,13 @@ class OffPolicyAlgorithm(BaseAlgorithm):
             self.episodeVectorReward += reward  # 累加奖励
 
             if terminated:
-                scalar_rewards = [np.dot(r, self.w) for r in self.episodeVectorReward]
+                # normalize the rewards - easiest to scale by maximum or average (positive) reward -> Q
+                # normalize the target using the same scaling operation -> J
+                # utility is - distance (J, Q)
+                scalar_rewards = [
+                    distance(normalize(r), normalize(self.target))
+                   # np.dot(r, self.w)
+                    for r in self.episodeVectorReward]
             else:
                 scalar_rewards = 0
 
